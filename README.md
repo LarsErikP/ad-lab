@@ -17,6 +17,8 @@ Det opprettes en OU-struktur som følger:
     * Studenter
   * Grupper
   * Klienter
+    * Ansatte
+    * Studenter
   * Servere
     * DHCP
     * Fil
