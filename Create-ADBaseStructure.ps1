@@ -45,15 +45,12 @@ function Create-LabUser {
     New-ADUser -Name $UserName -DisplayName "$GivenName $Surname" -GivenName $GivenName -Surname $Surname -Path $userPath -AccountPassword $defaultPassword -PasswordNeverExpires $true -ChangePasswordAtLogon $false -Enabled $true -UserPrincipalName "$UserName@$domain"
     $userObj = Get-ADUser -Identity $UserName
     $homeObj = New-Item -Path $homedirectory -ItemType Directory -force
-
-    # Take 1
     $acl = Get-Acl $homeObj
     $FileSystemRights = [System.Security.AccessControl.FileSystemRights]"FullControl"
     $AccessControlType = [System.Security.AccessControl.AccessControlType]::Allow
     $InheritanceFlags = [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit"
     $PropagationFlags = [System.Security.AccessControl.PropagationFlags]"None"
     $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($userObj.SID, $FileSystemRights, $InheritanceFlags, $PropagationFlags, $AccessControlType)
-
     $acl.AddAccessRule($accessRule)
     Set-Acl -Path $homeObj -AclObject $acl
 
