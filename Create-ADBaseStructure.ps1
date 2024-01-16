@@ -5,6 +5,9 @@ Import-Module ActiveDirectory
 ################################
 $homeshare = "\\lab-fileserver\HOME"
 $defaultPassword = ConvertTo-SecureString -AsPlainText -Force -String "SUPERHEMMELIG"
+$adminUsername = "larserik"
+$adminGivenName = "Lars Erik"
+$adminSurname = "Pedersen"
 
 #########################
 # Ikke endre mer herfra #
@@ -117,8 +120,8 @@ Add-ADGroupMember -Identity filshare-studieadm -Members studieadm
 
 # Admin-brukere
 Write-Host -ForegroundColor Green -BackgroundColor Black "Lager et par adminbrukere..."
-New-ADUser -Name "admin-larserik" -DisplayName "ADMIN Lars Erik Pedersen" -GivenName "Lars Erik" -Surname "Pedersen" -Path $adminbrukere -AccountPassword $defaultPassword -PasswordNeverExpires $true -ChangePasswordAtLogon $false -Enabled $true
-New-ADUser -Name "klientadmin-larserik" -DisplayName "KLIADMIN Lars Erik Pedersen" -GivenName "Lars Erik" -Surname "Pedersen" -Path $adminbrukere -AccountPassword $defaultPassword -PasswordNeverExpires $true -ChangePasswordAtLogon $false -Enabled $true
+New-ADUser -Name "admin-$adminUsername" -DisplayName "ADMIN $adminGivenName $adminSurname" -GivenName $adminGivenName -Surname $adminSurname -Path $adminbrukere -AccountPassword $defaultPassword -PasswordNeverExpires $true -ChangePasswordAtLogon $false -Enabled $true
+New-ADUser -Name "klientadmin-$adminUsername" -DisplayName "KLIADMIN $adminGivenName $adminSurname" -GivenName $adminGivenName -Surname $adminSurname -Path $adminbrukere -AccountPassword $defaultPassword -PasswordNeverExpires $true -ChangePasswordAtLogon $false -Enabled $true
 
 # Vanlige brukere
 Write-Host -ForegroundColor Green -BackgroundColor Black "Lager en bunke ansatte og studenter..."
@@ -131,9 +134,9 @@ Create-LabUser -Student -UserName selma -GivenName Selma -Surname Student -OU St
 
 # Gruppemedlemsskap
 Write-Host -ForegroundColor Green -BackgroundColor Black "Gir brukerene ymse gruppemedlemskap..."
-Add-ADGroupMember -Identity server-admin -Members admin-larserik
-Add-ADGroupMember -Identity filshare-admin -Members admin-larserik
-Add-ADGroupMember -Identity klient-admin -Members klientadmin-larserik
+Add-ADGroupMember -Identity server-admin -Members "admin-$adminUsername"
+Add-ADGroupMember -Identity filshare-admin -Members "admin-$adminUsername"
+Add-ADGroupMember -Identity klient-admin -Members "klientadmin-$adminUserName"
 Add-ADGroupMember -Identity studenter -Members sondre,selma
 Add-ADGroupMember -Identity hr -Members hilde
 Add-ADGroupMember -Identity it -Members ingrid
