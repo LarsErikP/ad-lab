@@ -39,18 +39,22 @@ function Create-LabUser {
      
     $homedirectory = "$homeshare\$UserName"
   
-    New-ADUser -Name $UserName -DisplayName "$GivenName $Surname" -GivenName $GivenName -Surname $Surname -Path $userPath -AccountPassword $defaultPassword -PasswordNeverExpires $true -ChangePasswordAtLogon $false -Enabled $true -HomeDrive H -HomeDirectory "$homedirectory" -UserPrincipalName "$UserName@$domain"
+    New-ADUser -Name $UserName -DisplayName "$GivenName $Surname" -GivenName $GivenName -Surname $Surname -Path $userPath -AccountPassword $defaultPassword -PasswordNeverExpires $true -ChangePasswordAtLogon $false -Enabled $true -UserPrincipalName "$UserName@$domain"
     $userObj = Get-ADUser -Identity $UserName
     $homeObj = New-Item -Path $homedirectory -ItemType Directory -force
+
+    # Take 1
     $acl = Get-Acl $homeObj
-    $FileSystemRights = [System.Security.AccessControl.FileSystemRights]"Modify"
+    $FileSystemRights = [System.Security.AccessControl.FileSystemRights]"FullControl"
     $AccessControlType = [System.Security.AccessControl.AccessControlType]::Allow
     $InheritanceFlags = [System.Security.AccessControl.InheritanceFlags]"ContainerInherit, ObjectInherit"
-    $PropagationFlags = [System.Security.AccessControl.PropagationFlags]"InheritOnly"
+    $PropagationFlags = [System.Security.AccessControl.PropagationFlags]"None"
     $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($userObj.SID, $FileSystemRights, $InheritanceFlags, $PropagationFlags, $AccessControlType)
 
     $acl.AddAccessRule($accessRule)
     Set-Acl -Path $homeObj -AclObject $acl
+
+    Set-ADUser -Identity $UserName -HomeDrive "H:" -HomeDirectory "$homedirectory"
 }
 
 
@@ -98,7 +102,7 @@ New-ADGroup -GroupScope DomainLocal -Name filshare-felles -Path "OU=Grupper,$bas
 New-ADGroup -GroupScope DomainLocal -Name filshare-regnskap -Path "OU=Grupper,$basedn" -Description "Tilgang til filshare for regnskap"
 New-ADGroup -GroupScope DomainLocal -Name filshare-hr -Path "OU=Grupper,$basedn" -Description "Tilgang til filsgare for HR"
 New-ADGroup -GroupScope DomainLocal -Name filshare-it -Path "OU=Grupper,$basedn" -Description "Tilgang til filshare for IT-avdelingen"
-New-ADGroup -GroupScope DomainLocal -Name filshare-studieadm -Path "OU=Grupper,$basedn" -Description "Tilgang til filsgare for studieadministrasjonen"
+New-ADGroup -GroupScope DomainLocal -Name filshare-studieadm -Path "OU=Grupper,$basedn" -Description "Tilgang til filshare for studieadministrasjonen"
 
 # Gruppenøsting
 Write-Host -ForegroundColor Green -BackgroundColor Black "Nøster sammen litt grupper..."
