@@ -209,10 +209,7 @@ resources:
       flavor: { get_param: client_flavor }
       key_name: { get_param: keypair }
       networks:
-        - network: { get_resource: ad_net }
-      security_groups:
-        - default
-        - { get_resource: sg_common_windows }
+        - port: { get_resource: klient1_port }
 
   klient2:
     type: OS::Nova::Server
@@ -222,7 +219,4 @@ resources:
       flavor: { get_param: client_flavor }
       key_name: { get_param: keypair }
       networks:
-        - network: { get_resource: ad_net }
-      security_groups:
-        - default
-        - { get_resource: sg_common_windows }
+        - port: { get_resource: klient2_port }
