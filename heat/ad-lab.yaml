@@ -1,0 +1,228 @@
+---
+heat_template_version: wallaby
+
+description: >
+  Deploy the basic infrastructure for a MS ADDS setup.
+  Only the servers and networks are deployed. No configuration
+
+parameters:
+  environment:
+    type: string
+    description: Describe env. Used in resources names. Typically lab/demo
+  keypair:
+    type: string
+    description: Keypair to use
+  server_image:
+    type: string
+    description: Image for Windows Servers
+    default: Windows Server 2022 Standard [Evaluation]
+  client_image:
+    type: string
+    description: Image for Windows Clients
+    default: Windows 10 22H2 Enterprise [Evaluation]
+  server_flavor:
+    type: string
+    description: Flavor for servers
+    default: gx3.4c4r
+  client_flavor:
+    type: string
+    description: Flavor for clients
+    default: gx3.2c4r
+
+resources:
+# Network stuff
+  ad_net:
+    type: OS::Neutron::Net
+    properties:
+      name: { list_join: ['-', [ { get_param: environment }, 'ad-network' ]]}
+
+  ad_subnet_v4:
+    type: OS::Neutron::Subnet
+    properties:
+      name: { list_join: ['-', [ { get_param: environment }, 'ad-subnet-v4' ]]}
+      network: { get_resource: ad_net }
+      cidr: 192.168.0.0/24
+      gateway_ip: 192.168.0.1
+      allocation_pools:
+        - start: 192.168.0.2
+          end: 192.168.0.254
+
+  ad_router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: ntnu-internal
+
+  ad_router_interface_v4:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: ad_router }
+      subnet_id: { get_resource: ad_subnet_v4 }
+
+  sg_common_windows:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Common Windows rules
+      rules:
+        - protocol: icmp
+          remote_ip_prefix: '0.0.0.0/0'
+        - protocol: tcp
+          port_range_min: 3389
+          port_range_max: 3389
+          remote_ip_prefix: '0.0.0.0/0'
+
+  dc1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: ad_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ad_subnet_v4 }
+          ip_address: 192.168.0.10
+      security_groups:
+        - default
+        - { get_resource: sg_common_windows }
+
+  dc2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: ad_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ad_subnet_v4 }
+          ip_address: 192.168.0.11
+      security_groups:
+        - default
+        - { get_resource: sg_common_windows }
+
+  fil_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: ad_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ad_subnet_v4 }
+          ip_address: 192.168.0.12
+      security_groups:
+        - default
+        - { get_resource: sg_common_windows }
+
+  klient1_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: ad_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ad_subnet_v4 }
+          ip_address: 192.168.0.110
+      security_groups:
+        - default
+        - { get_resource: sg_common_windows }
+
+  klient2_port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_resource: ad_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ad_subnet_v4 }
+          ip_address: 192.168.0.111
+      security_groups:
+        - default
+        - { get_resource: sg_common_windows }
+
+  dc1_fip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: ntnu-internal
+      port_id: { get_resource: dc1_port }
+
+  dc2_fip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: ntnu-internal
+      port_id: { get_resource: dc2_port }
+
+  fil_fip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: ntnu-internal
+      port_id: { get_resource: fil_port }
+
+  klient1_fip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: ntnu-internal
+      port_id: { get_resource: klient1_port }
+
+  klient2_fip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: ntnu-internal
+      port_id: { get_resource: klient2_port }
+
+# Volumes
+  fileserver_data_volume:
+    type: OS::Cinder::Volume
+    properties:
+      name: { list_join: ['-', [ { get_param: environment }, 'fil-data' ]]}
+      size: 30
+      volume_type: SSD-300
+
+  fileserver_data_volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: { get_resource: fileserver }
+      volume_id: { get_resource: fileserver_data_volume }
+
+# Servers
+  dc1:
+    type: OS::Nova::Server
+    properties:
+      name: { list_join: ['-', [ { get_param: environment }, 'dc1' ]]}
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: keypair }
+      networks:
+        - port: { get_resource: dc1_port }
+
+  dc2:
+    type: OS::Nova::Server
+    properties:
+      name: { list_join: ['-', [ { get_param: environment }, 'dc2' ]]}
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: keypair }
+      networks:
+        - port: { get_resource: dc2_port }
+
+  fileserver:
+    type: OS::Nova::Server
+    properties:
+      name: { list_join: ['-', [ { get_param: environment }, 'fil' ]]}
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: keypair }
+      networks:
+        - port: { get_resource: fil_port }
+
+  klient1:
+    type: OS::Nova::Server
+    properties:
+      name: { list_join: ['-', [ { get_param: environment }, 'klient1' ]]}
+      image: { get_param: client_image }
+      flavor: { get_param: client_flavor }
+      key_name: { get_param: keypair }
+      networks:
+        - network: { get_resource: ad_net }
+      security_groups:
+        - default
+        - { get_resource: sg_common_windows }
+
+  klient2:
+    type: OS::Nova::Server
+    properties:
+      name: { list_join: ['-', [ { get_param: environment }, 'klient2' ]]}
+      image: { get_param: client_image }
+      flavor: { get_param: client_flavor }
+      key_name: { get_param: keypair }
+      networks:
+        - network: { get_resource: ad_net }
+      security_groups:
+        - default
+        - { get_resource: sg_common_windows }
