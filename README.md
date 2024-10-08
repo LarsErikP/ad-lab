@@ -39,3 +39,19 @@ I tillegg opprettes:
 * Grupper for hhv server-admin, klient-admin og filshare-admin
 * En bunke grupper som er tiltenkt rettigheter til diverse filshare
 * Fornuftige gruppemedlemskap på alle opprettede brukere
+
+## Openstack Heat
+Repoet inneholder også en Openstack HOT for å opprette VMene og nettverket som trengs for å lage en lab med to domenekontrollere, en filserver med tilhørende datavolum og to klienter.
+Denne kan startes med
+```
+openstack stack create -t ad-lab.yaml -e <parameters>.yaml --wait ad-lab
+```
+
+Paramter-filen må inneholde minimum
+```
+---
+parameters:
+  keypair: NØKKELPARETMITT
+  environment: "NOEFINT"
+```
+Hvor "NOEFINT" er et prefiks på alle ressurser. Typisk bruker man "lab", "demo", "test", "prod", "bacon" e.l her.
