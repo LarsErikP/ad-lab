@@ -1,9 +1,14 @@
 # ad-lab
 Ymse verktøy for å sette opp MS AD-lab
 
+## Create-HomeShare.ps1
+Scriptet oppretter en mappe for hjemmeområder, og setter korrekte rettigheter ([kilde](https://learn.microsoft.com/en-us/archive/blogs/migreene/ntfs-permissions-for-redirected-folders-or-home-directories)) for dette.
+Kjøres typisk på filserveren. Filserveren må ha PowerShell-modulen for ActiveDirectory installert.
+
 ## Create-ADBaseStructure.ps1
 Scriptet oppretter en grunnstruktur i AD som kan være et fint utgangspunkt for en lab. En filserver må være satt opp før man begynner, og det må være satt opp et share for hjemmeområder.
 Dette sharet må ha rettigheter iht [denne guiden](https://learn.microsoft.com/en-us/archive/blogs/migreene/ntfs-permissions-for-redirected-folders-or-home-directories).
+Hvis du har vært flink, så har du kjørt scriptet over først, og dette er dermed på plass :-)
 
 Scriptet kjøres typisk på en domenekontroller.
 
