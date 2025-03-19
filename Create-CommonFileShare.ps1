@@ -3,6 +3,8 @@
 # and Create-ADBaseStructure.ps1
 
 # You need the PS Module for ActiveDirectory installed
+# The script must be run on the fileserver, with as a user that is member of
+# the $fileShareAdminGroupName group
 
 [CmdletBinding()]
 Param(
