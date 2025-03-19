@@ -82,7 +82,6 @@ foreach ($commonFolder in $commonFolders) {
     } else {
         $groupName = $commonFolder
     }
-    Write-Host "groupName: $groupName"
     Create-CommonFolder -Path "${FellesFolderPath}\${commonFolder}" -GroupName "filshare-$groupName"
 }
 
